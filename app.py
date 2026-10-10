@@ -18,31 +18,81 @@ st.set_page_config(
 
 
 # =========================================================
-# SIMPLE DESIGN
+# DESIGN  (lighter textured background + bright headings)
 # =========================================================
 
 st.markdown("""
 <style>
 
+/* ---------- Textured, lighter background ---------- */
 .stApp {
-    background-color: #0f1020;
+    background-color: #3d3591;
+    background-image:
+        radial-gradient(circle at 15% 8%,  rgba(255, 110, 199, 0.38), transparent 42%),
+        radial-gradient(circle at 85% 0%,  rgba(34, 211, 238, 0.34), transparent 40%),
+        radial-gradient(circle at 50% 100%, rgba(255, 209, 102, 0.16), transparent 45%),
+        repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.045) 0px, rgba(255, 255, 255, 0.045) 2px, transparent 2px, transparent 14px),
+        radial-gradient(rgba(255, 255, 255, 0.10) 1px, transparent 1px);
+    background-size: auto, auto, auto, auto, 24px 24px;
+    background-attachment: fixed;
 }
 
-h1, h2, h3, h4, p, label {
-    color: white !important;
+/* ---------- Text colours ---------- */
+p, label, li, span, div[data-testid="stMarkdownContainer"] {
+    color: #ffffff;
 }
 
+/* All headings: bright, never black */
+h1, h2, h3, h4 {
+    color: #ffd166 !important;
+    text-shadow: 0 0 12px rgba(255, 209, 102, 0.35);
+}
+
+/* ---------- Main title (bright gradient) ---------- */
 .title {
     text-align: center;
-    font-size: 36px;
-    font-weight: bold;
+    font-size: 40px;
+    font-weight: 800;
     margin-top: 20px;
+    background: linear-gradient(90deg, #ffd166 0%, #ff6ec7 50%, #22d3ee 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 10px rgba(255, 110, 199, 0.45));
 }
 
 .subtitle {
     text-align: center;
-    color: #bbbbcc;
+    color: #e6e8ff;
+    font-size: 16px;
     margin-bottom: 30px;
+}
+
+/* ---------- Cards (bordered containers) ---------- */
+div[data-testid="stVerticalBlockBorderWrapper"] {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.28) !important;
+    border-radius: 14px;
+    backdrop-filter: blur(2px);
+}
+
+/* ---------- Metrics ---------- */
+div[data-testid="stMetricValue"] { color: #22d3ee !important; }
+div[data-testid="stMetricLabel"] p { color: #ffd166 !important; }
+
+/* ---------- Button ---------- */
+.stButton button {
+    background: linear-gradient(135deg, #ffd166 0%, #ff6ec7 100%);
+    color: #1b1740 !important;
+    font-weight: 800;
+    border: none;
+    border-radius: 10px;
+}
+.stButton button:hover { filter: brightness(1.1); }
+
+/* ---------- Progress bar ---------- */
+.stProgress > div > div > div > div {
+    background-image: linear-gradient(90deg, #22d3ee, #ff6ec7);
 }
 
 </style>
@@ -91,7 +141,7 @@ if not os.path.exists(csv_path):
     st.write("Your folder must contain:")
 
     st.code("""
-C:\\social media analysis\\
+your_project_folder\\
 │
 ├── app.py
 └── movies.csv
@@ -310,24 +360,15 @@ def recommend_movies(
     number_of_movies
 ):
 
-    # Find selected movie
-
     selected_rows = df[
         df["title"] == movie_name
     ]
-
 
     if selected_rows.empty:
 
         return pd.DataFrame()
 
-
-    # Get movie index
-
     movie_index = selected_rows.index[0]
-
-
-    # Get similarity scores
 
     scores = list(
         enumerate(
@@ -335,16 +376,10 @@ def recommend_movies(
         )
     )
 
-
-    # Sort highest similarity first
-
     scores.sort(
         key=lambda x: x[1],
         reverse=True
     )
-
-
-    # Remove selected movie itself
 
     scores = [
         item
@@ -352,37 +387,23 @@ def recommend_movies(
         if item[0] != movie_index
     ]
 
-
-    # Select top movies
-
     scores = scores[
         :number_of_movies
     ]
-
-
-    # Movie indexes
 
     indexes = [
         item[0]
         for item in scores
     ]
 
-
-    # Similarity percentages
-
     matches = [
         round(item[1] * 100, 1)
         for item in scores
     ]
 
-
-    # Create result
-
     result = df.iloc[indexes].copy()
 
-
     result["match"] = matches
-
 
     return result.reset_index(
         drop=True
@@ -430,42 +451,24 @@ if st.button(
     use_container_width=True
 ):
 
-    # -----------------------------------------------------
-    # SELECTED MOVIE
-    # -----------------------------------------------------
-
     selected_movie_data = df[
         df["title"] == selected_movie
     ].iloc[0]
-
 
     st.success(
         f"🎯 Because you liked: {selected_movie}"
     )
 
-
-    # -----------------------------------------------------
-    # SELECTED MOVIE DETAILS
-    # -----------------------------------------------------
-
     col1, col2 = st.columns(2)
-
 
     with col1:
 
         rating = selected_movie_data["rating"]
 
         if pd.isna(rating):
-            st.metric(
-                "⭐ Rating",
-                "N/A"
-            )
+            st.metric("⭐ Rating", "N/A")
         else:
-            st.metric(
-                "⭐ Rating",
-                f"{rating:.1f}"
-            )
-
+            st.metric("⭐ Rating", f"{rating:.1f}")
 
     with col2:
 
@@ -474,36 +477,20 @@ if st.button(
             selected_movie_data["genre"]
         )
 
-
     st.write("")
-
-
-    # -----------------------------------------------------
-    # RECOMMEND MOVIES
-    # -----------------------------------------------------
 
     results = recommend_movies(
         selected_movie,
         number_of_movies
     )
 
-
     if results.empty:
 
-        st.warning(
-            "No similar movies found."
-        )
+        st.warning("No similar movies found.")
 
     else:
 
-        st.subheader(
-            "🎬 Recommended for you"
-        )
-
-
-        # -------------------------------------------------
-        # DISPLAY RESULTS
-        # -------------------------------------------------
+        st.subheader("🎬 Recommended for you")
 
         for _, movie in results.iterrows():
 
@@ -513,59 +500,31 @@ if st.button(
                     f"### 🎬 {movie['title']}"
                 )
 
-
                 col1, col2, col3 = st.columns(3)
-
 
                 with col1:
 
                     movie_rating = movie["rating"]
 
                     if pd.isna(movie_rating):
-
-                        st.write(
-                            "⭐ Rating: N/A"
-                        )
-
+                        st.write("⭐ Rating: N/A")
                     else:
-
-                        st.write(
-                            f"⭐ Rating: "
-                            f"{movie_rating:.1f}"
-                        )
-
+                        st.write(f"⭐ Rating: {movie_rating:.1f}")
 
                 with col2:
 
-                    st.write(
-                        f"🎭 Genre: "
-                        f"{movie['genre']}"
-                    )
-
+                    st.write(f"🎭 Genre: {movie['genre']}")
 
                 with col3:
 
-                    st.write(
-                        f"🎯 Match: "
-                        f"{movie['match']}%"
-                    )
-
+                    st.write(f"🎯 Match: {movie['match']}%")
 
                 st.write("")
 
-
-                st.write(
-                    movie["description"]
-                )
-
-
-                # Similarity progress bar
+                st.write(movie["description"])
 
                 st.progress(
-                    min(
-                        movie["match"] / 100,
-                        1.0
-                    )
+                    min(movie["match"] / 100, 1.0)
                 )
 
 
@@ -593,7 +552,6 @@ with st.expander(
         **5. The most similar movies are recommended**
         """
     )
-
 
     st.write(
         "**Technologies:** "
